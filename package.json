@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-sprinkles-prefer",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "ESLint plugin to prefer sprinkles over vanilla-extract style. Dynamically parses your project's sprinkles.css.ts file.",
   "main": "index.js",
   "type": "module",
