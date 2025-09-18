@@ -11,7 +11,15 @@
     "sprinkles",
     "css-in-js"
   ],
-  "author": "",
+  "author": "oungo <y2k6273@naver.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oungo/eslint-plugin-sprinkles-prefer"
+  },
+  "bugs": {
+    "url": "https://github.com/oungo/eslint-plugin-sprinkles-prefer/issues"
+  },
+  "homepage": "https://github.com/oungo/eslint-plugin-sprinkles-prefer#readme",
   "license": "MIT",
   "dependencies": {
     "@babel/parser": "^7.24.0",
