@@ -1,15 +1,33 @@
 import preferSprinkles from './rules/prefer-sprinkles.js';
 
-export default {
+const plugin = {
+  meta: {
+    name: 'eslint-plugin-sprinkles-prefer',
+    version: '1.0.0'
+  },
   rules: {
     'prefer-sprinkles': preferSprinkles,
   },
-  configs: {
-    recommended: {
-      plugins: ['sprinkles-prefer'],
-      rules: {
-        'sprinkles-prefer/prefer-sprinkles': 'warn',
-      },
+};
+
+// Legacy config support
+plugin.configs = {
+  recommended: {
+    plugins: ['sprinkles-prefer'],
+    rules: {
+      'sprinkles-prefer/prefer-sprinkles': 'warn',
     },
   },
 };
+
+// Flat config support
+plugin.configs['flat/recommended'] = {
+  plugins: {
+    'sprinkles-prefer': plugin,
+  },
+  rules: {
+    'sprinkles-prefer/prefer-sprinkles': 'warn',
+  },
+};
+
+export default plugin;

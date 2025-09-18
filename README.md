@@ -20,6 +20,35 @@ yarn add -D eslint-plugin-sprinkles-prefer
 
 ## Configuration
 
+### ESLint Flat Config (eslint.config.js)
+
+```javascript
+import sprinklesPrefer from 'eslint-plugin-sprinkles-prefer';
+
+export default [
+  {
+    plugins: {
+      'sprinkles-prefer': sprinklesPrefer
+    },
+    rules: {
+      'sprinkles-prefer/prefer-sprinkles': 'warn'
+    }
+  }
+];
+```
+
+Or use the recommended config:
+
+```javascript
+import sprinklesPrefer from 'eslint-plugin-sprinkles-prefer';
+
+export default [
+  sprinklesPrefer.configs['flat/recommended']
+];
+```
+
+### Legacy Config (.eslintrc)
+
 Add to your ESLint config:
 
 ```javascript
