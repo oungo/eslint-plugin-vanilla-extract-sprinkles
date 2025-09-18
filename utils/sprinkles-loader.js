@@ -141,8 +141,8 @@ export function loadSprinklesProperties(projectRoot = process.cwd()) {
 
   if (!sprinklesFile) {
     console.warn('Could not find sprinkles.css.ts file in project');
-    // 기본값 반환
-    return getDefaultSprinklesProperties();
+    // 폴백 없이 빈 객체 반환
+    return {};
   }
 
   try {
@@ -163,41 +163,8 @@ export function loadSprinklesProperties(projectRoot = process.cwd()) {
     return properties;
   } catch (error) {
     console.error(`Error parsing sprinkles file: ${error.message}`);
-    return getDefaultSprinklesProperties();
+    return {};
   }
-}
-
-/**
- * 기본 sprinkles 속성들 (폴백용)
- */
-function getDefaultSprinklesProperties() {
-  return {
-    position: ['absolute', 'relative', 'fixed', 'sticky', 'static'],
-    display: ['none', 'flex', 'inline-flex', 'block', 'inline', 'grid', 'inline-block'],
-    flexDirection: ['row', 'column'],
-    justifyContent: ['stretch', 'flex-start', 'center', 'flex-end', 'space-around', 'space-between', 'space-evenly'],
-    alignItems: ['stretch', 'flex-start', 'center', 'flex-end', 'baseline', 'initial'],
-    margin: ['0 auto'],
-    width: ['100%', '100vw'],
-    height: ['100%', '100vh', 'calc(var(--vh, 1vh) * 100)'],
-    textAlign: ['left', 'center', 'right', 'start'],
-    overflow: ['auto', 'hidden', 'scroll'],
-    borderRadius: [999],
-    whiteSpace: ['normal', 'nowrap', 'pre', 'pre-line', 'pre-wrap', 'break-spaces'],
-    wordBreak: ['normal', 'break-all', 'break-word', 'keep-all'],
-    zIndex: {
-      BASE: 1,
-      STICKY: 100,
-      FLOATING: 200,
-      FIXED: 300,
-      MODAL: 500,
-      SNACKBAR: 600,
-      HIGHEST: 999,
-      BOTTOM_SHEET: 1000,
-    },
-    color: 'theme-colors',
-    backgroundColor: 'theme-colors',
-  };
 }
 
 /**
@@ -228,14 +195,10 @@ export function isSprinklesValue(property, value) {
   const properties = loadSprinklesProperties();
   const allowedValues = properties[property];
 
-  // 색상 속성의 경우 특별 처리
+  // 색상 속성의 경우 특별 처리 - 모든 문자열 값 허용
   if (allowedValues === 'theme-colors') {
-    // 문자열 리터럴이고 컬러 토큰 패턴인지 확인
-    if (typeof value === 'string') {
-      // 일반적인 색상 토큰 패턴들 (gray-100, blue-500 등)
-      return /^[a-z]+-\d+$|^(white|black|transparent)$/.test(value);
-    }
-    return false;
+    // 문자열이면 모두 허용 (프로젝트마다 다른 색상 체계 지원)
+    return typeof value === 'string';
   }
 
   // 객체 형태의 값 (zIndex)
