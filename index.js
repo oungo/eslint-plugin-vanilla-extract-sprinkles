@@ -3,7 +3,7 @@ import preferSprinkles from './rules/prefer-sprinkles.js';
 const plugin = {
   meta: {
     name: 'eslint-plugin-sprinkles-prefer',
-    version: '1.0.1'
+    version: '2.0.0'
   },
   rules: {
     'prefer-sprinkles': preferSprinkles,
