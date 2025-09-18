@@ -39,6 +39,28 @@ export function findSprinklesFile(projectRoot = process.cwd()) {
 }
 
 /**
+ * AST에서 객체의 키값들을 추출하는 헬퍼 함수
+ */
+function extractObjectKeys(node) {
+  const keys = [];
+  if (node && node.type === 'ObjectExpression') {
+    node.properties.forEach(prop => {
+      if (prop.key) {
+        const keyName = prop.key.type === 'Identifier'
+          ? prop.key.name
+          : (prop.key.type === 'StringLiteral' || prop.key.type === 'Literal')
+            ? prop.key.value
+            : null;
+        if (keyName) {
+          keys.push(keyName);
+        }
+      }
+    });
+  }
+  return keys;
+}
+
+/**
  * AST에서 defineProperties 호출 찾아서 properties 객체 추출
  */
 function extractPropertiesFromAST(ast) {
@@ -99,11 +121,9 @@ function extractPropertiesFromAST(ast) {
                   properties[propName] = objValues;
                 }
               } else if (prop.value.type === 'MemberExpression') {
-                // theme.colors 같은 참조
-                if (prop.value.object && prop.value.object.name === 'theme' &&
-                    prop.value.property && prop.value.property.name === 'colors') {
-                  properties[propName] = 'theme-colors';
-                }
+                // 외부 객체 참조 (theme.colors 등)
+                // MemberExpression이면 일단 스킵하고 나중에 실제 객체를 찾아서 처리
+                properties[propName] = 'pending-resolution';
               }
             }
           });
@@ -124,7 +144,79 @@ function extractPropertiesFromAST(ast) {
   }
 
   traverse(ast);
+
+  // pending-resolution인 항목들을 다시 순회하여 실제 객체 찾기
+  Object.keys(properties).forEach(propName => {
+    if (properties[propName] === 'pending-resolution') {
+      // colors나 backgroundColor 속성인 경우
+      if (propName === 'color' || propName === 'backgroundColor') {
+        // AST를 다시 순회하여 해당 속성에 연결된 실제 객체 찾기
+        const colorKeys = findColorKeysInAST(ast);
+        if (colorKeys.length > 0) {
+          properties[propName] = colorKeys;
+        } else {
+          // 키를 찾을 수 없으면 해당 속성 제거
+          delete properties[propName];
+        }
+      } else {
+        // 다른 속성은 제거
+        delete properties[propName];
+      }
+    }
+  });
+
   return properties;
+}
+
+/**
+ * AST에서 색상 관련 객체의 키들을 찾는 함수
+ */
+function findColorKeysInAST(ast) {
+  const keys = [];
+
+  function traverse(node) {
+    if (!node || typeof node !== 'object') return;
+
+    // colors나 backgroundColor 같은 이름의 객체 찾기
+    if (node.type === 'VariableDeclarator') {
+      const varName = node.id && node.id.name;
+
+      // colors, color, backgroundColor 등의 변수명 찾기
+      if (varName && (varName === 'colors' || varName === 'color' ||
+          varName === 'backgroundColor' || varName === 'backgroundColors')) {
+        if (node.init && node.init.type === 'ObjectExpression') {
+          keys.push(...extractObjectKeys(node.init));
+        }
+      }
+    }
+
+    // 객체 프로퍼티에서도 찾기
+    if (node.type === 'ObjectExpression') {
+      node.properties.forEach(prop => {
+        const propKey = prop.key && (prop.key.name || prop.key.value);
+        if (propKey && (propKey === 'colors' || propKey === 'color' ||
+            propKey === 'backgroundColor' || propKey === 'backgroundColors')) {
+          if (prop.value && prop.value.type === 'ObjectExpression') {
+            keys.push(...extractObjectKeys(prop.value));
+          }
+        }
+      });
+    }
+
+    // 재귀적으로 순회
+    for (const key in node) {
+      if (node[key] && typeof node[key] === 'object') {
+        if (Array.isArray(node[key])) {
+          node[key].forEach(traverse);
+        } else {
+          traverse(node[key]);
+        }
+      }
+    }
+  }
+
+  traverse(ast);
+  return [...new Set(keys)]; // 중복 제거
 }
 
 /**
@@ -195,10 +287,10 @@ export function isSprinklesValue(property, value) {
   const properties = loadSprinklesProperties();
   const allowedValues = properties[property];
 
-  // 색상 속성의 경우 특별 처리 - 모든 문자열 값 허용
-  if (allowedValues === 'theme-colors') {
-    // 문자열이면 모두 허용 (프로젝트마다 다른 색상 체계 지원)
-    return typeof value === 'string';
+  // 색상 속성이고 배열로 저장된 경우 (실제 색상 키들)
+  if (Array.isArray(allowedValues) && (property === 'color' || property === 'backgroundColor')) {
+    // 배열에 포함된 색상 키값만 허용
+    return allowedValues.includes(value);
   }
 
   // 객체 형태의 값 (zIndex)
